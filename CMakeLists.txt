@@ -24,9 +24,19 @@ add_compile_options(-g)
 file(GLOB_RECURSE PROJECT_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "src/*.cc")
 file(GLOB_RECURSE PROJECT_HEADERS CONFIGURE_DEPENDS "src/include/*.h" "src/include/*.hpp")
 
+# 主程序与单元测试共享的核心实现库（排除 main.cpp，避免链接时重复定义 main）
+list(FILTER PROJECT_SOURCES EXCLUDE REGEX "main\\.cpp$")
+add_library(${PROJECT_NAME}_core STATIC ${PROJECT_SOURCES})
+target_include_directories(${PROJECT_NAME}_core PUBLIC src src/include)
+
+# 线程支持：mac/linux 统一显式链接 Threads::Threads
+#（linux 上 std::thread 需要 -pthread，mac 自动提供；显式声明保证跨平台可移植）
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME}_core PUBLIC Threads::Threads)
+
 # 主目标
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
-target_include_directories(${PROJECT_NAME} PRIVATE src src/include)
+add_executable(${PROJECT_NAME} src/main.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_core)
 
 # 启用测试
 option(BUILD_TESTING "Build unit tests" ON)
