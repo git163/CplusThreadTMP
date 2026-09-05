@@ -4,11 +4,22 @@
 
 include(FetchContent)
 
-FetchContent_Declare(
-    googletest
-    GIT_REPOSITORY https://github.com/google/googletest.git
-    GIT_TAG v1.14.0
-)
+# googletest：优先使用随仓库提交的本地压缩包（third_party/googletest-1.14.0.tar.gz），
+# 支持离线构建与内网移植；本地归档缺失时回退从 GitHub 拉取对应 tag。
+set(GTEST_ARCHIVE "${CMAKE_CURRENT_SOURCE_DIR}/../third_party/googletest-1.14.0.tar.gz")
+if(EXISTS "${GTEST_ARCHIVE}")
+    FetchContent_Declare(
+        googletest
+        URL "file://${GTEST_ARCHIVE}"
+        URL_HASH "SHA256=4a3e5cc87e8a1e581150310753b5f2f5dacc957f649ba71a178edd00b3a63e14"
+    )
+else()
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG v1.14.0
+    )
+endif()
 
 # Windows 下强制使用 shared CRT，避免链接错误
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)

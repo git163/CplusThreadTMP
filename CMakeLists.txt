@@ -34,6 +34,25 @@ target_include_directories(${PROJECT_NAME}_core PUBLIC src src/include)
 find_package(Threads REQUIRED)
 target_link_libraries(${PROJECT_NAME}_core PUBLIC Threads::Threads)
 
+# —— 本地三方库：nlohmann/json（header-only）——
+# 从随仓库提交的压缩包离线解压（third_party/json-3.11.3.tar.gz），构建不依赖网络。
+set(JSON_ARCHIVE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/json-3.11.3.tar.gz")
+if(NOT EXISTS "${JSON_ARCHIVE}")
+    message(FATAL_ERROR
+        "Missing ${JSON_ARCHIVE}: downloaded vendored dependency must sit in third_party/ "
+        "before configuring (network-free build).")
+endif()
+# 解压到构建目录 _deps/，顶层目录为 json-3.11.3/
+file(ARCHIVE_EXTRACT INPUT "${JSON_ARCHIVE}" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/_deps")
+set(JSON_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/_deps/json-3.11.3/include")
+if(NOT EXISTS "${JSON_INCLUDE}/nlohmann/json.hpp")
+    message(FATAL_ERROR "Unexpected archive layout: nlohmann/json.hpp not found under ${JSON_INCLUDE}")
+endif()
+add_library(nlohmann_json INTERFACE)
+target_include_directories(nlohmann_json INTERFACE "${JSON_INCLUDE}")
+# 库对主程序与单元测试可见（PUBLIC 传播）
+target_link_libraries(${PROJECT_NAME}_core PUBLIC nlohmann_json)
+
 # 主目标
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_core)

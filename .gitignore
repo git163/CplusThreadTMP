@@ -29,3 +29,7 @@ Makefile
 *.gcno
 coverage/
 *.info
+
+# 三方库以压缩包形式随仓库提交（third_party/*.tar.gz 需入库，勿忽略）
+# 本地解压/下载缓存
+third_party/googletest/
